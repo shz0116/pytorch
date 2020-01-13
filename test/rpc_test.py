@@ -712,6 +712,16 @@ class RpcTest(RpcAgentTestFixture):
             fut.wait()
 
     @dist_init
+    def test_script_function_exception(self):
+        @torch.jit.script
+        def no_args():
+            a = 1
+        n = self.rank + 1
+        dst_rank = n % self.world_size
+        with self.assertRaisesRegex(Exception, "no_args"):
+            ret = rpc.rpc_sync("worker{}".format(dst_rank), no_args, args=(10,))
+
+    @dist_init
     def test_nested_rpc(self):
         n = self.rank + 1
         dst_rank = n % self.world_size
